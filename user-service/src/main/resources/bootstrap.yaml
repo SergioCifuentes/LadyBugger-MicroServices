@@ -5,3 +5,13 @@ spring:
     config:
       enabled: true
       uri: http://localhost:8081
+server:
+  port: 8083
+  
+logging:
+    level:
+        org:
+            springframework:
+                web:
+                    filter:
+                        CommonsRequestLoggingFilter: DEBUG
