@@ -9,10 +9,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
+import org.springframework.boot.actuate.autoconfigure.metrics.MetricsProperties.Web.Client.ClientRequest;
 
 @RestController
 @RequestMapping("/user")
@@ -29,13 +32,26 @@ public class UserController {
         return ResponseEntity.ok(users);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<User> getById(@PathVariable("id") int id) {
-        User user = userService.getUserById(id);
-        if(user == null)
-            return ResponseEntity.notFound().build();
-        return ResponseEntity.ok(user);
-    }
+@GetMapping("/listHeaders")
+public ResponseEntity<String> listAllHeaders(
+  @RequestHeader Map<String, String> headers) {
+    headers.forEach((key, value) -> {
+        System.out.println((String.format("Header '%s' = %s", key, value)));
+    });
+    System.out.println("Hola");
+    return new ResponseEntity<String>(
+      String.format("Listed %d headers", headers.size()), HttpStatus.OK);
+}
+    
+
+//    public String getById(@PathVariable("id") int id @RequestBody TokenDto requestDTO)  {
+//        //String body = request.getReader().lines().collect(Collectors.joining());
+//        //User user = userService.getUserById(id);
+////        if(user == null)
+////            return ResponseEntity.notFound().build();
+//    
+//        return "ss";
+//    }
 
     @PostMapping()
     public ResponseEntity<User> save(@RequestBody User user) {
