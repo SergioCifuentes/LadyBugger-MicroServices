@@ -1,6 +1,5 @@
 package com.ladybugger.adminservice.controller;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -8,7 +7,6 @@ import java.util.Set;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import org.springframework.http.HttpStatus;
@@ -26,27 +24,23 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ladybugger.adminservice.exceptions.*;
-import com.ladybugger.adminservice.model.Case;
-import com.ladybugger.adminservice.model.CaseType;
 import com.ladybugger.adminservice.model.Employee;
 import com.ladybugger.adminservice.model.PMAssignment;
-import com.ladybugger.adminservice.model.Phase;
 import com.ladybugger.adminservice.model.Project;
-import com.ladybugger.adminservice.model.Role;
 import com.ladybugger.adminservice.payload.request.CaseTypeCreationRequest;
 import com.ladybugger.adminservice.payload.request.PMAssignmentRequest;
 import com.ladybugger.adminservice.payload.request.ProjectCreationRequest;
-import com.ladybugger.adminservice.payload.response.CaseResponse;
-import com.ladybugger.adminservice.payload.response.EmployeeResponse;
 import com.ladybugger.adminservice.payload.response.MessageResponse;
-import com.ladybugger.adminservice.payload.response.ProjectCases;
-import com.ladybugger.adminservice.payload.response.SimpleCase;
 import com.ladybugger.adminservice.repository.CaseRepository;
 import com.ladybugger.adminservice.repository.CaseTypeRepository;
 import com.ladybugger.adminservice.repository.EmployeeRepository;
 import com.ladybugger.adminservice.repository.PMAssignmentRepository;
 import com.ladybugger.adminservice.repository.PhaseRepository;
 import com.ladybugger.adminservice.repository.ProjectRepository;
+import com.ladybugger.adminservice.service.CaseService;
+import com.ladybugger.adminservice.service.CaseTypeService;
+import com.ladybugger.adminservice.service.DevsService;
+import com.ladybugger.adminservice.service.ProjectService;
 
 @CrossOrigin(origins = "*")
 @RestController
@@ -67,6 +61,14 @@ public class AdminController {
     PMAssignmentRepository pmaRepository;
     @Autowired
     CaseRepository caseRepository;
+    @Autowired
+    DevsService devsService;
+    @Autowired
+    CaseTypeService caseTypeService;
+    @Autowired
+    ProjectService projectService;
+    @Autowired
+    CaseService caseService;
 
     @PostMapping("/create-project")
     @PreAuthorize("hasRole('ADMIN')")
@@ -101,75 +103,25 @@ public class AdminController {
     @GetMapping("/devs-list")
     // @PreAuthorize("hasRole('ADMIN')")
     public List<Object[]> getDevs() {
-        System.out.println("Hola");
-
-        return userRepository.findByDevRole();
+        return devsService.getDevsByRole();
     }
 
     @PostMapping("/create-casetype")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> registerCaseType(@Valid @RequestBody CaseTypeCreationRequest caseRequest) {
-
-        CaseType caseType = new CaseType(caseRequest.getName(),
-                caseRequest.getDescription(),
-                1);
-        Set<String> strphases = caseRequest.getPhases();
-        Set<Phase> phases = new HashSet<>();
-        System.out.println(strphases);
-        String[] arrphases = strphases.toArray(new String[strphases.size()]);
-
-        for (int i = 0; i < arrphases.length; i++) {
-            Phase phase = new Phase(arrphases[i], i + 1, caseType);
-            phases.add(phase);
-        }
-
-        caseTypeRepository.save(caseType);
-        phaseRepository.saveAll(phases);
-        return new ResponseEntity<String>("{\"id\": \"" + caseType.getId() + "\"}", HttpStatus.OK);
+        return new ResponseEntity<String>(caseTypeService.createCaseTypeService(caseRequest), HttpStatus.OK);
     }
 
     @PostMapping("/assign-project")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> assignProject(@Valid @RequestBody PMAssignmentRequest pmAssignmentRequest) {
-        Project pr = projectRepository.findById((long) pmAssignmentRequest.getProjectId())
-                .orElseThrow(() -> new RuntimeException("Error: Project not found"));
-
-        Employee dev = userRepository.findById((long) pmAssignmentRequest.getEmployeeId())
-                .orElseThrow(() -> new RuntimeException("Error: Dev not found"));
-        java.sql.Timestamp timestamp1 = new java.sql.Timestamp(System.currentTimeMillis());
-        PMAssignment pma = new PMAssignment(dev,
-                pr,
-                timestamp1);
-        pmAssignmentRepository.save(pma);
-        return new ResponseEntity<String>("Project Manager Asignado", HttpStatus.OK);
+        return new ResponseEntity<String>(devsService.assignProject(pmAssignmentRequest), HttpStatus.OK);
     }
 
     @GetMapping(value = "/get-projects")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> getProjects(Pageable pageable) {
-
-        Page<Project> pr = projectRepository.findAll(pageable);
-
-        List<ProjectCases> projectsResponse = new ArrayList<ProjectCases>();
-        for (Project project : pr) {
-            List<SimpleCase> casesResponse = new ArrayList<SimpleCase>();
-            for (Case cases : project.getCases()) {
-                casesResponse.add(new SimpleCase(cases.getId(),
-                        cases.getTitle(),
-                        cases.getDescription()));
-            }
-            PMAssignment pma = pmaRepository
-                    .findLastManager(project.getId());
-            projectsResponse.add(new ProjectCases(project.getId(),
-                    project.getName(),
-                    pma.getEmployee().getName() + " " + pma.getEmployee().getLastName(),
-                    project.getStatus(),
-                    project.getStartDate().toString(),
-                    project.getDueDate().toString(),
-                    casesResponse));
-        }
-
-        return ResponseEntity.ok(projectsResponse);
+        return ResponseEntity.ok(projectService.getProjectsPageable(pageable));
     }
 
     @PutMapping("/delete-employee/{id}")
@@ -194,51 +146,13 @@ public class AdminController {
     @GetMapping(value = "/get-cases")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> getCases(Pageable pageable) {
-
-        Page<Case> pr = caseRepository.findAll(pageable);
-
-        List<CaseResponse> casesResponse = new ArrayList<CaseResponse>();
-        for (Case caseM : pr) {
-            casesResponse.add(new CaseResponse(caseM.getId(),
-                    caseM.getDescription(),
-                    caseM.getCasetype().getName(),
-                    caseM.getStatus(),
-                    caseM.getProject().getName(),
-                    caseM.getProject().getId(),
-                    caseM.getStartDate().toString(),
-                    caseM.getDueDate().toString()));
-        }
-
-        return ResponseEntity.ok(casesResponse);
+        return ResponseEntity.ok(caseService.getProjectsPageable(pageable));
     }
 
     @GetMapping(value = "/get-users")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> getUsers(Pageable pageable) {
-
-        Page<Employee> employees = userRepository.findAll(pageable);
-
-        List<EmployeeResponse> employeeResponse = new ArrayList<EmployeeResponse>();
-
-        for (Employee employee : employees) {
-
-            List<Role> roles = new ArrayList<>(employee.getRoles());
-            String role;
-            if (roles.size() == 2) {
-                role = "ROLE_ADMIN";
-            } else {
-                role = "ROLE_USER";
-            }
-            employeeResponse.add(new EmployeeResponse(employee.getId(),
-                    employee.getName() + " " + employee.getLastName(),
-                    employee.getEmail(),
-                    role,
-                    employee.getStatus(),
-                    employee.getStartDate().toString()));
-
-        }
-
-        return ResponseEntity.ok(employeeResponse);
+        return ResponseEntity.ok(devsService.getUsers(pageable));
     }
 
 }
