@@ -25,9 +25,11 @@ public class CaseService {
     CaseRepository caseRepository;
     
     public List<CaseResponse> getProjectsPageable(Pageable pageable) {
-
         Page<Case> pr = caseRepository.findAll(pageable);
-
+        return getCasesResponse(pr.toList());
+    }
+    
+    public List<CaseResponse> getCasesResponse(List<Case> pr) {
         List<CaseResponse> casesResponse = new ArrayList<CaseResponse>();
         for (Case caseM : pr) {
             casesResponse.add(new CaseResponse(caseM.getId(),
