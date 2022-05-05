@@ -1,4 +1,4 @@
-package com.ladybugger.authservice.dto;
+package com.ladybugger.userservice.controller;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,8 +9,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Data
 @Builder
-public class AuthUserDto {
+public class TokenDto {
 
-    private String email;
-    private String password;
+    private String token;
+    private Long id;
 }
