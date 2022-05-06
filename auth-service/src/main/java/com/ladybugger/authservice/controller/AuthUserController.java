@@ -28,10 +28,8 @@ public class AuthUserController {
     @PostMapping("/validate")
     public ResponseEntity<TokenDto> validate(@RequestParam String token, @RequestBody RequestDto dto){
         TokenDto tokenDto = employeeService.validate(token, dto);
-        System.out.println("val");
         if(tokenDto == null)
             return ResponseEntity.badRequest().build();
-        System.out.println("val2");
         return ResponseEntity.ok(tokenDto);
     }
 
@@ -40,6 +38,7 @@ public class AuthUserController {
         Employee employee = employeeService.save(dto);
         if(employee == null)
             return ResponseEntity.badRequest().build();
+        
         return ResponseEntity.ok(employee);
     }
 }

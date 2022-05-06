@@ -26,11 +26,15 @@ spring:
         - id: dev-service
           uri: lb://dev-service
           predicates:
-            - Path=/dev-service/**
+            - Path=/dev/**
+          filters:
+            - AuthFilter  
         - id: admin-service
           uri: lb://admin-service
           predicates:
-            - Path=/admin-service/**
+            - Path=/admin/**
+          filters:
+            - AuthFilter  
         - id: manager-service
           uri: lb://manager-service
           predicates:

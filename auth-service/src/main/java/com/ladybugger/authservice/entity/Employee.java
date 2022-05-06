@@ -12,6 +12,8 @@ import javax.persistence.*;
 
 
 import java.sql.Date;
+import java.util.HashSet;
+import java.util.Set;
 import lombok.Builder;
 import lombok.Data;
 
@@ -47,7 +49,9 @@ public class Employee {
         
         private String role;
 
-
+        @ManyToMany(fetch = FetchType.LAZY)
+	@JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
+	private Set<Role> roles = new HashSet<>();
 
 	
 	public Date getStartDate() {
