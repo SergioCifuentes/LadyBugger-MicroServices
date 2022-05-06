@@ -79,7 +79,7 @@ public class ManagerController {
                 caseRequest), HttpStatus.OK);
     }
 
-    @PostMapping("/prueba")
+    @GetMapping("/prueba")
     public ResponseEntity<?> prueba(@RequestHeader("userId") String userId) {
         Long longId = Long.parseLong(userId);
         System.out.println("Yes " + longId);

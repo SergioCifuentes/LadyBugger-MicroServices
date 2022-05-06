@@ -41,26 +41,15 @@ import com.ladybugger.adminservice.service.CaseService;
 import com.ladybugger.adminservice.service.CaseTypeService;
 import com.ladybugger.adminservice.service.DevsService;
 import com.ladybugger.adminservice.service.ProjectService;
+import org.springframework.web.bind.annotation.RequestHeader;
 
-@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/admin")
 public class AdminController {
 
     @Autowired
     EmployeeRepository userRepository;
-    @Autowired
-    ProjectRepository projectRepository;
-    @Autowired
-    PMAssignmentRepository pmAssignmentRepository;
-    @Autowired
-    CaseTypeRepository caseTypeRepository;
-    @Autowired
-    PhaseRepository phaseRepository;
-    @Autowired
-    PMAssignmentRepository pmaRepository;
-    @Autowired
-    CaseRepository caseRepository;
+
     @Autowired
     DevsService devsService;
     @Autowired
@@ -71,55 +60,31 @@ public class AdminController {
     CaseService caseService;
 
     @PostMapping("/create-project")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> registerProject(@Valid @RequestBody ProjectCreationRequest projectCreationRequest) {
-        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication()
-                .getPrincipal();
-
-        // Create new project
-        Employee em = userRepository.findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new RuntimeException("Error: Employee not found"));
-        Project project = new Project(projectCreationRequest.getName(),
-                projectCreationRequest.getDescription(),
-                1,
-                projectCreationRequest.getStartDate(),
-                projectCreationRequest.getDueDate(),
-                em);
-        Employee pm = userRepository.findById((long) projectCreationRequest.getPmId())
-                .orElseThrow(() -> new RuntimeException("Error: Employee not found"));
-        java.sql.Timestamp timestamp1 = new java.sql.Timestamp(System.currentTimeMillis());
-        Set<PMAssignment> pmas = new HashSet<>();
-        PMAssignment apm = new PMAssignment(pm, project, timestamp1);
-        pmas.add(apm);
-
-        pm.setProjects(pmas);
-        project.setPms(pmas);
-
-        projectRepository.save(project);
-        pmAssignmentRepository.save(apm);
-        return new ResponseEntity<String>("{\"id\": \"" + project.getId() + "\"}", HttpStatus.OK);
+    public ResponseEntity<?> registerProject(@RequestHeader("userId") String userId,
+            @Valid @RequestBody ProjectCreationRequest projectCreationRequest) {
+        Long longId = Long.parseLong(userId);
+        String output=projectService.registerProject(longId,
+                projectCreationRequest);
+        
+        return new ResponseEntity<String>(output, HttpStatus.OK);
     }
 
     @GetMapping("/devs-list")
-    // @PreAuthorize("hasRole('ADMIN')")
     public List<Object[]> getDevs() {
         return devsService.getDevsByRole();
     }
 
     @PostMapping("/create-casetype")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> registerCaseType(@Valid @RequestBody CaseTypeCreationRequest caseRequest) {
         return new ResponseEntity<String>(caseTypeService.createCaseTypeService(caseRequest), HttpStatus.OK);
     }
 
     @PostMapping("/assign-project")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> assignProject(@Valid @RequestBody PMAssignmentRequest pmAssignmentRequest) {
         return new ResponseEntity<String>(devsService.assignProject(pmAssignmentRequest), HttpStatus.OK);
     }
 
     @GetMapping(value = "/get-projects")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> getProjects(Pageable pageable) {
         return ResponseEntity.ok(projectService.getProjectsPageable(pageable));
     }
@@ -144,13 +109,11 @@ public class AdminController {
     }
 
     @GetMapping(value = "/get-cases")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> getCases(Pageable pageable) {
         return ResponseEntity.ok(caseService.getProjectsPageable(pageable));
     }
 
     @GetMapping(value = "/get-users")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> getUsers(Pageable pageable) {
         return ResponseEntity.ok(devsService.getUsers(pageable));
     }

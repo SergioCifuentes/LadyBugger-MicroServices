@@ -25,7 +25,6 @@ import com.ladybugger.devservice.repository.PhaseAssignmentRepository;
 import com.ladybugger.devservice.repository.PhaseRepository;
 import com.ladybugger.devservice.repository.SubmissionRepository;
 
-@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/developer")
 public class DeveloperController {
@@ -39,7 +38,6 @@ public class DeveloperController {
         PhaseRepository phaseRepository;
 
         @PostMapping("/submit")
-        @PreAuthorize("hasRole('USER')")
         public ResponseEntity<?> submit(@Valid @RequestBody SubmissionRequest submissionRequest) {
                 UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication()
                                 .getPrincipal();
@@ -49,8 +47,6 @@ public class DeveloperController {
                 PhaseAssignment phaseA = phaseAssignmentRepository
                                 .findById((long) submissionRequest.getPhaseAssignmentId())
                                 .orElseThrow(() -> new RuntimeException("Error: Project not found"));
-                // System.out.println(pmaRepository.findLastManager(pr.getId()));
-
                 if (!phaseA.getDev().getId().equals(em.getId())) {
                         return ResponseEntity
                                         .badRequest()
@@ -68,7 +64,6 @@ public class DeveloperController {
         }
 
         @GetMapping("/get-phase/{id}")
-        @PreAuthorize("hasRole('USER')")
         public ResponseEntity<?> getPhase(@PathVariable String id) {
                 UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication()
                                 .getPrincipal();
@@ -104,7 +99,6 @@ public class DeveloperController {
         }
 
         @GetMapping("/get-phases")
-        @PreAuthorize("hasRole('USER')")
         public ResponseEntity<?> getPhases() {
                 UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication()
                                 .getPrincipal();
