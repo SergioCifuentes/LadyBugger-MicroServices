@@ -5,6 +5,8 @@
 package com.ladybugger.adminservice.service;
 
 import com.ladybugger.adminservice.exception.EmployeeNotFound;
+import com.ladybugger.adminservice.exception.LogicalError;
+import com.ladybugger.adminservice.exception.ProjectNotFound;
 import com.ladybugger.adminservice.model.Case;
 import com.ladybugger.adminservice.model.Employee;
 import com.ladybugger.adminservice.model.PMAssignment;
@@ -30,15 +32,14 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class ProjectService {
-    
+
     @Autowired
     PMAssignmentRepository pmaRepository;
     @Autowired
     ProjectRepository projectRepository;
     @Autowired
     EmployeeRepository employeeRepository;
-    
-    
+
     public List<ProjectCases> getProjectsPageable(Pageable pageable) {
 
         Page<Project> pr = projectRepository.findAll(pageable);
@@ -63,9 +64,9 @@ public class ProjectService {
         }
         return projectsResponse;
     }
-    
-        public String registerProject(Long userId,ProjectCreationRequest projectCreationRequest) {
-            Employee em = employeeRepository.findById(userId)
+
+    public String registerProject(Long userId, ProjectCreationRequest projectCreationRequest) {
+        Employee em = employeeRepository.findById(userId)
                 .orElseThrow(() -> new EmployeeNotFound("Error: Employee not found"));
 
         Project project = new Project(projectCreationRequest.getName(),
@@ -87,5 +88,20 @@ public class ProjectService {
         pmaRepository.save(apm);
         return "{\"id\": \"" + project.getId() + "\"}";
     }
-    
+
+    public Project cancelProject(String project_id) {
+        long project_long;
+        try {
+            project_long = Long.parseLong(project_id);
+        } catch (Exception e) {
+            throw new LogicalError("Wrong id");
+        }
+
+        Project project = projectRepository.findById(project_long)
+                .orElseThrow(() -> new ProjectNotFound("Phase not found for this id :: " + project_long));
+        project.setStatus(2);
+        Project updatedProject = projectRepository.save(project);
+        return updatedProject;
+    }
+
 }

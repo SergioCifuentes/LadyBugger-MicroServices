@@ -5,15 +5,19 @@
 package com.ladybugger.managerservice.service;
 
 import com.ladybugger.managerservice.exceptions.CaseNotFound;
+import com.ladybugger.managerservice.exceptions.EmployeeNotFound;
 import com.ladybugger.managerservice.exceptions.LogicalError;
 import com.ladybugger.managerservice.model.Case;
+import com.ladybugger.managerservice.model.Employee;
 import com.ladybugger.managerservice.model.Phase;
 import com.ladybugger.managerservice.model.PhaseAssignment;
 import com.ladybugger.managerservice.payload.response.ListPhasesView;
 import com.ladybugger.managerservice.payload.response.MessageResponse;
 import com.ladybugger.managerservice.payload.response.PhaseView;
 import com.ladybugger.managerservice.repository.CaseRepository;
+import com.ladybugger.managerservice.repository.EmployeeRepository;
 import com.ladybugger.managerservice.repository.PhaseAssignmentRepository;
+import com.ladybugger.managerservice.repository.PhaseRepository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -31,6 +35,10 @@ public class PhaseService {
     CaseRepository caseRepository;
     @Autowired
     PhaseAssignmentRepository phaseAssignmentRepository;
+    @Autowired
+    EmployeeRepository employeeRepository;
+    @Autowired
+    PhaseRepository phaseRepository;
     
     public ListPhasesView getPhase(String projectId){
         long id_long;
@@ -73,5 +81,7 @@ public class PhaseService {
         }
     return new ListPhasesView(phasesProcess, phasesCanceled, phasesFinished, phasesToDo);
     }
+    
+
     
 }

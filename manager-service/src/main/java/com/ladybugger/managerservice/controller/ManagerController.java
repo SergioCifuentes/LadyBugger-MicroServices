@@ -76,5 +76,14 @@ public class ManagerController {
         ListPhasesView lpv= phaseService.getPhase(id);
         return ResponseEntity.ok(lpv);
     }
+    
+    @PutMapping("/cancel-phase-assignment/{phase_id}")
+    public ResponseEntity<?> cancelPhaseAssignment(@RequestHeader("userId") String userId,
+            @PathVariable String phase_id) {
+        Long longId = Long.parseLong(userId);
+        return ResponseEntity.ok(phaseAssignmentService.cancelPhaseAssignment(longId, phase_id)); 
+    
+        
+    }
 
 }

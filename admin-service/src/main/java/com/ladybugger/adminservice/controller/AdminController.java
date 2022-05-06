@@ -92,5 +92,13 @@ public class AdminController {
     public ResponseEntity<?> getUsers(Pageable pageable) {
         return ResponseEntity.ok(devsService.getUsers(pageable));
     }
+    
+        @PutMapping("/cancel-project/{project_id}")
+    public ResponseEntity<?> cancelPhaseAssignment(@PathVariable String project_id) {
+       
+        return ResponseEntity.ok(projectService.cancelProject(project_id)); 
+    
+        
+    }
 
 }
