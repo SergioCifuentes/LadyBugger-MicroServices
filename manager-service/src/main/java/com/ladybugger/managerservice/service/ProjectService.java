@@ -1,5 +1,6 @@
 package com.ladybugger.managerservice.service;
 
+import com.ladybugger.managerservice.exceptions.EmployeeNotFound;
 import com.ladybugger.managerservice.exceptions.LogicalError;
 import com.ladybugger.managerservice.exceptions.ProjectNotFound;
 import com.ladybugger.managerservice.model.Case;
@@ -47,13 +48,13 @@ public class ProjectService {
 
     public List<SimpleProject> getAssignedProject(Long userId) {
         Employee em = employeeRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Error: Employee not found"));
+                .orElseThrow(() -> new EmployeeNotFound("Error: Employee not found"));
 
         List<Long> projectIds = pmaRepository.findProjects(em.getId());
         List<SimpleProject> projects = new ArrayList<SimpleProject>();
         for (Long id : projectIds) {
             Project pr = projectRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("Error: Project not found"));
+                    .orElseThrow(() -> new ProjectNotFound("Error: Project not found"));
 
             projects.add(new SimpleProject((long) id,
                     em.getName() + " " + em.getLastName(),

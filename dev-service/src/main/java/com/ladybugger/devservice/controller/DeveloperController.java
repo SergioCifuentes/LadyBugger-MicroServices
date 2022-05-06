@@ -20,103 +20,69 @@ import com.ladybugger.devservice.payload.request.SubmissionRequest;
 import com.ladybugger.devservice.payload.response.MessageResponse;
 import com.ladybugger.devservice.payload.response.PhaseDevResponse;
 import com.ladybugger.devservice.payload.response.PhaseResponse;
+import com.ladybugger.devservice.payload.response.ProfileResponse;
 import com.ladybugger.devservice.repository.EmployeeRepository;
 import com.ladybugger.devservice.repository.PhaseAssignmentRepository;
 import com.ladybugger.devservice.repository.PhaseRepository;
 import com.ladybugger.devservice.repository.SubmissionRepository;
+import com.ladybugger.devservice.service.PhaseService;
+import com.ladybugger.devservice.service.SubmissionService;
+import com.ladybugger.devservice.service.EmployeeService;
 
 @RestController
 @RequestMapping("/developer")
 public class DeveloperController {
-        @Autowired
-        EmployeeRepository userRepository;
-        @Autowired
-        PhaseAssignmentRepository phaseAssignmentRepository;
-        @Autowired
-        SubmissionRepository submissionRepository;
-        @Autowired
-        PhaseRepository phaseRepository;
 
-        @PostMapping("/submit")
-        public ResponseEntity<?> submit(@Valid @RequestBody SubmissionRequest submissionRequest) {
-                UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication()
-                                .getPrincipal();
-                Employee em = userRepository.findByEmail(userDetails.getUsername())
-                                .orElseThrow(() -> new RuntimeException("Error: Employee not found"));
 
-                PhaseAssignment phaseA = phaseAssignmentRepository
-                                .findById((long) submissionRequest.getPhaseAssignmentId())
-                                .orElseThrow(() -> new RuntimeException("Error: Project not found"));
-                if (!phaseA.getDev().getId().equals(em.getId())) {
-                        return ResponseEntity
-                                        .badRequest()
-                                        .body(new MessageResponse("Error: You are not the developer of this phase"));
-                }
+    @Autowired
+    SubmissionService submissionService;
+    @Autowired
+    PhaseService phaseService;
+    @Autowired
+    EmployeeService employeeService;
 
-                Submission submission = new Submission(phaseA,
-                                submissionRequest.getComment(),
-                                submissionRequest.getHours(),
-                                submissionRequest.getCost(),
-                                submissionRequest.getDate());
+    @PostMapping("/submit")
+    public ResponseEntity<?> submit(@RequestHeader("userId") String userId,
+            @Valid @RequestBody SubmissionRequest submissionRequest) {
+        Long longId = Long.parseLong(userId);
+        String rep = submissionService.createSubmission(longId, submissionRequest);
+        return new ResponseEntity<String>(rep, HttpStatus.OK);
+    }
 
-                submissionRepository.save(submission);
-                return new ResponseEntity<String>("{\"id\": \"" + submission.getId() + "\"}", HttpStatus.OK);
-        }
+    @GetMapping("/get-phase/{id}")
+    public ResponseEntity<?> getPhase(@RequestHeader("userId") String userId,
+            @PathVariable String id) {
+        Long longId = Long.parseLong(userId);
+        PhaseResponse pr = phaseService.getPhase(longId, id);
+        return ResponseEntity.ok(pr);
+    }
 
-        @GetMapping("/get-phase/{id}")
-        public ResponseEntity<?> getPhase(@PathVariable String id) {
-                UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication()
-                                .getPrincipal();
-                Employee em = userRepository.findByEmail(userDetails.getUsername())
-                                .orElseThrow(() -> new RuntimeException("Error: Employee not found"));
+    @GetMapping("/get-phases")
+    public ResponseEntity<?> getPhases(@RequestHeader("userId") String userId) {
+        Long longId = Long.parseLong(userId);
+        List<PhaseDevResponse> phasesResponse = phaseService.getPhases(longId);
 
-                long id_long;
-                try {
-                        id_long = Long.parseLong(id);
-                } catch (Exception e) {
-                        return ResponseEntity
-                                        .badRequest()
-                                        .body(new MessageResponse("Wrong id"));
-                }
-                PhaseAssignment phaseAssignment = phaseAssignmentRepository.findById(id_long)
-                                .orElseThrow(() -> new RuntimeException("Error: Phase not found"));
-                if (!phaseAssignment.getDev().getId().equals(em.getId())) {
-                        return ResponseEntity
-                                        .badRequest()
-                                        .body(new MessageResponse(
-                                                        "Error: You are not the developer of this phase"));
-                }
+        return ResponseEntity.ok(phasesResponse);
+    }
+    
+    @GetMapping("/profile/{id}")
+    public ResponseEntity<?> profile(@PathVariable String id) {
+        
+        ProfileResponse profileResponse = employeeService.getProfile(id);
 
-                return ResponseEntity.ok(new PhaseResponse(phaseAssignment.getPhase().getName(),
-                                phaseAssignment.getDev().getName() + " " + phaseAssignment.getDev().getLastName(),
-                                phaseAssignment.getStartDate().toString(),
-                                phaseAssignment.getDueDate().toString(),
-                                phaseAssignment.getCaseM().getProject().getId(),
-                                phaseAssignment.getCaseM().getProject().getName(),
-                                phaseAssignment.getCaseM().getId(),
-                                phaseAssignment.getCaseM().getTitle(),
-                                phaseAssignment.getCaseM().getDescription()));
-        }
-
-        @GetMapping("/get-phases")
-        public ResponseEntity<?> getPhases() {
-                UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication()
-                                .getPrincipal();
-                Employee em = userRepository.findByEmail(userDetails.getUsername())
-                                .orElseThrow(() -> new RuntimeException("Error: Employee not found"));
-                List<PhaseDevResponse> phasesResponse = new ArrayList<PhaseDevResponse>();
-                List<PhaseAssignment> phaseAssignments = phaseAssignmentRepository.findPhasesByDev(em.getId());
-                for (PhaseAssignment phaseAs : phaseAssignments) {
-                        phasesResponse.add(new PhaseDevResponse(phaseAs.getPhase().getId(),
-                                        phaseAs.getPhase().getName(),
-                                        phaseAs.getCaseM().getProject().getName(),
-                                        phaseAs.getCaseM().getTitle(),
-                                        em.getName() + " " + em.getLastName(),
-                                        phaseAs.getStartDate().toString(),
-                                        phaseAs.getDueDate().toString(),
-                                        phaseAs.getStatus()));
-                }
-                return ResponseEntity.ok(phasesResponse);
-        }
+        return ResponseEntity.ok(profileResponse);
+    }
+    
+    @GetMapping("/phase-job/{phase_id}")
+    public ResponseEntity<?> phaseJob(@RequestHeader("userId") String userId,
+            @PathVariable String phase_id) {
+        Long longId = Long.parseLong(userId);
+        return new ResponseEntity<String>(phaseService.getPhaseJob(longId, phase_id),
+                HttpStatus.OK); 
+    
+        
+    }
+    
+    
 
 }
