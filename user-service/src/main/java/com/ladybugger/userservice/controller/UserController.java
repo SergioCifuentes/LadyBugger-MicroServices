@@ -34,13 +34,11 @@ public class UserController {
 
 @GetMapping("/listHeaders")
 public ResponseEntity<String> listAllHeaders(
-  @RequestHeader Map<String, String> headers) {
-    headers.forEach((key, value) -> {
-        System.out.println((String.format("Header '%s' = %s", key, value)));
-    });
-    System.out.println("Hola");
+  @RequestHeader("userId") String userId) {
+    
+    System.out.println(userId);
     return new ResponseEntity<String>(
-      String.format("Listed %d headers", headers.size()), HttpStatus.OK);
+      String.format("Listed  headers"+ userId), HttpStatus.OK);
 }
     
 

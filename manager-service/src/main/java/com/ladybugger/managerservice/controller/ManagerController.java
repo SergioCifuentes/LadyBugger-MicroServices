@@ -14,7 +14,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import com.ladybugger.managerservice.model.CaseType;
 import com.ladybugger.managerservice.model.Employee;
 import com.ladybugger.managerservice.model.PMAssignment;
 import com.ladybugger.managerservice.model.Phase;
@@ -31,7 +30,6 @@ import com.ladybugger.managerservice.payload.response.ListPhasesView;
 import com.ladybugger.managerservice.payload.response.MessageResponse;
 import com.ladybugger.managerservice.payload.response.PhaseView;
 import com.ladybugger.managerservice.payload.response.ProjectView;
-import com.ladybugger.managerservice.payload.response.SimpleProject;
 import com.ladybugger.managerservice.repository.CaseRepository;
 import com.ladybugger.managerservice.repository.CaseTypeRepository;
 import com.ladybugger.managerservice.repository.EmployeeRepository;
@@ -41,16 +39,18 @@ import com.ladybugger.managerservice.repository.PhaseRepository;
 import com.ladybugger.managerservice.repository.ProjectRepository;
 import com.ladybugger.managerservice.repository.RevisionRepository;
 import com.ladybugger.managerservice.repository.SubmissionRepository;
+import com.ladybugger.managerservice.service.CaseTypeService;
+import com.ladybugger.managerservice.service.PhaseAssignmentService;
+import com.ladybugger.managerservice.service.ProjectService;
 
-@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/manager")
 public class ManagerController {
 
     @Autowired
-    ProjectRepository projectRepository;
-    @Autowired
     CaseTypeRepository caseTypeRepository;
+    @Autowired
+    ProjectRepository projectRepository;
     @Autowired
     CaseRepository caseRepository;
     @Autowired
@@ -65,71 +65,39 @@ public class ManagerController {
     SubmissionRepository submissionRepository;
     @Autowired
     RevisionRepository revisionRepository;
+    @Autowired
+    CaseTypeService caseTypeService;
+    @Autowired
+    PhaseAssignmentService phaseAssignmentService;
+    @Autowired
+    ProjectService projectService;
 
     @PostMapping("/create-case")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<?> registerCaseType(@Valid @RequestBody CaseCreationRequest caseRequest) {
-        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication()
-                .getPrincipal();
-        Employee em = userRepository.findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new RuntimeException("Error: Employee not found"));
+    public ResponseEntity<?> registerCaseType(@RequestHeader("userId") String userId, @Valid @RequestBody CaseCreationRequest caseRequest) {
+        Long longId = Long.parseLong(userId);
+        return new ResponseEntity<String>(caseTypeService.registerCaseType(longId,
+                caseRequest), HttpStatus.OK);
+    }
 
-        Project pr = projectRepository.findById((long) caseRequest.getProjectId())
-                .orElseThrow(() -> new RuntimeException("Error: Project not found"));
-        // System.out.println(pmaRepository.findLastManager(pr.getId()));
-        PMAssignment pma = pmaRepository.findLastManager(pr.getId());
-        if (!pma.getEmployee().getId().equals(em.getId())) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(new MessageResponse("Error: You are not the project Manager"));
-        }
-
-        CaseType ct = caseTypeRepository.findById((long) caseRequest.getCaseTypeId())
-                .orElseThrow(() -> new RuntimeException("Error: CaseType not found"));
-        Case newCase = new Case(caseRequest.getTitle(),
-                caseRequest.getDescription(),
-                ct,
-                1,
-                pr,
-                caseRequest.getStartDate(),
-                caseRequest.getDueDate(), 1);
-
-        caseRepository.save(newCase);
-        return new ResponseEntity<String>("{\"id\": \"" + newCase.getId() + "\"}", HttpStatus.OK);
+    @PostMapping("/prueba")
+    public ResponseEntity<?> prueba(@RequestHeader("userId") String userId) {
+        Long longId = Long.parseLong(userId);
+        System.out.println("Yes " + longId);
+        return new ResponseEntity<String>("z", HttpStatus.OK);
     }
 
     @PostMapping("/assign-phase")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<?> assignPhase(@Valid @RequestBody PhaseAssignmentRequest assignmentRequest) {
-        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication()
-                .getPrincipal();
-        Employee em = userRepository.findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new RuntimeException("Error: Employee not found"));
+    public ResponseEntity<?> assignPhase(@RequestHeader("userId") String userId, @Valid @RequestBody PhaseAssignmentRequest assignmentRequest) {
+        Long longId = Long.parseLong(userId);
+        return new ResponseEntity<String>(phaseAssignmentService.assignPhase(longId,
+                assignmentRequest), HttpStatus.OK);
+    }
 
-        Phase phase = phaseRepository.findById((long) assignmentRequest.getPhaseId())
-                .orElseThrow(() -> new RuntimeException("Error: Phase not found"));
+    @GetMapping("/get-assigned-projects")
+    public ResponseEntity<?> getAssignedProject(@RequestHeader("userId") String userId) {
+        Long longId = Long.parseLong(userId);
 
-        Case caseM = caseRepository.findById((long) assignmentRequest.getCaseId())
-                .orElseThrow(() -> new RuntimeException("Error: Case not found"));
-        // System.out.println(pmaRepository.findLastManager(pr.getId()));
-        PMAssignment pma = pmaRepository.findLastManager(caseM.getProject().getId());
-        if (!pma.getEmployee().getId().equals(em.getId())) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(new MessageResponse("Error: You are not the project manager"));
-        }
-        Employee dev = userRepository.findById((long) assignmentRequest.getDevId())
-                .orElseThrow(() -> new RuntimeException("Error: Dev not found"));
-        PhaseAssignment phaseAssignment = new PhaseAssignment(dev,
-                phase,
-                caseM,
-                assignmentRequest.getDescription(),
-                1,
-                assignmentRequest.getStartDate(),
-                assignmentRequest.getDueDate());
-
-        phaseAssignmentRepository.save(phaseAssignment);
-        return new ResponseEntity<String>("{\"id\": \"" + phaseAssignment.getId() + "\"}", HttpStatus.OK);
+        return ResponseEntity.ok(projectService.getAssignedProject(longId));
     }
 
     @PostMapping("/revision")
@@ -158,29 +126,6 @@ public class ManagerController {
 
         revisionRepository.save(revision);
         return new ResponseEntity<String>("{\"id\": \"" + revision.getId() + "\"}", HttpStatus.OK);
-    }
-
-    @GetMapping("/get-assigned-projects")
-    public ResponseEntity<?> getAssignedProject() {
-        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication()
-                .getPrincipal();
-        Employee em = userRepository.findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new RuntimeException("Error: Employee not found"));
-
-        List<Long> projectIds = pmaRepository.findProjects(em.getId());
-        List<SimpleProject> projects = new ArrayList<SimpleProject>();
-        for (Long id : projectIds) {
-            Project pr = projectRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("Error: Project not found"));
-
-            projects.add(new SimpleProject((long) id,
-                    em.getName() + " " + em.getLastName(),
-                    pr.getName(),
-                    pr.getDueDate().toString(),
-                    pr.getStatus()));
-        }
-
-        return ResponseEntity.ok(projects);
     }
 
     @GetMapping("/get-project/{id}")

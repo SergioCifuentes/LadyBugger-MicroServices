@@ -60,12 +60,15 @@ public class EmployeeService {
     }
 
     public TokenDto validate(String token, RequestDto dto) {
+        System.out.println("entra");
         if(!jwtProvider.validate(token, dto))
             return null;
+        System.out.println("1");
         String email = jwtProvider.getEmailFromToken(token);
         Optional<Employee> user=employeeRepository.findByEmail(email);
         if(!user.isPresent())
             return null;
+        System.out.println("2");
         return new TokenDto(token,user.get().getId());
     }
 }

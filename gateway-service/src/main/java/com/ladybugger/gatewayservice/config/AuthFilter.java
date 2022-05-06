@@ -31,6 +31,7 @@ public class AuthFilter extends AbstractGatewayFilterFactory<AuthFilter.Config> 
             if(chunks.length != 2 || !chunks[0].equals("Bearer"))
                 return onError(exchange, HttpStatus.BAD_REQUEST);
             final Long id;
+            System.out.println(exchange.getRequest().getPath().toString()+" HHHH "+exchange.getRequest().getMethod().toString());
             return webClient.build()
                     .post()
                     .uri("http://auth-service/auth/validate?token=" + chunks[1])
@@ -38,7 +39,7 @@ public class AuthFilter extends AbstractGatewayFilterFactory<AuthFilter.Config> 
                     .retrieve().bodyToMono(TokenDto.class)
                     .map(t -> {
                         t.getId();
-                        exchange.getRequest().mutate().header("id", String.valueOf(t.getId()));
+                        exchange.getRequest().mutate().header("userId", String.valueOf(t.getId()));
                         return exchange;
                     }).flatMap(chain::filter);
         }));
