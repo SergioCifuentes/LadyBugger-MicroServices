@@ -11,6 +11,7 @@
     <groupId>com.ladybugger</groupId>
     <artifactId>admin-service</artifactId>
     <version>0.0.1-SNAPSHOT</version>
+    <packaging>jar</packaging>
     <name>admin-service</name>
     <description>Admin service for ladybugger</description>
     <properties>
@@ -126,7 +127,16 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
+             <plugin>
+                <groupId>com.google.cloud.tools</groupId>
+                <artifactId>appengine-maven-plugin</artifactId>
+                <version>2.2.0</version>
+                <configuration>
+                    <version>1</version>
+                </configuration>
+            </plugin>
         </plugins>
+       
     </build>
 
 </project>

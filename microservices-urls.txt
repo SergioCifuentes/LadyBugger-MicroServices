@@ -1,0 +1,6 @@
+1. Eureka Server - https://eureka-app-dot-gcp-4a-348317.uc.r.appspot.com/
+2. Gateway Server - https://gateway-dot-gcp-4a-348317.uc.r.appspot.com/
+3. Auth Server - https://gcp-4a-348317.uc.r.appspot.com/
+4. Admin Server - https://admin-dot-gcp-4a-348317.uc.r.appspot.com
+5. Manager Server - https://manager-dot-gcp-4a-348317.uc.r.appspot.com
+6. Dev Server - https://dev-dot-gcp-4a-348317.uc.r.appspot.com
