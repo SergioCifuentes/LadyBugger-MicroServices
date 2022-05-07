@@ -18,7 +18,7 @@ import java.util.Map;
 public class JwtProvider {
 
     @Value("${jwt.secret}")
-    private String secret;
+    private String secret = "testing";
 
     @Autowired
     RouteValidator routeValidator;
@@ -49,8 +49,9 @@ public class JwtProvider {
         }catch (Exception e){
             return false;
         }
-        if(!isAdmin(token) && routeValidator.isAdminPath(dto))
+        if(routeValidator.isAdminPath(dto) && !isAdmin(token)){
             return false;
+        }
         return true;
     }
 

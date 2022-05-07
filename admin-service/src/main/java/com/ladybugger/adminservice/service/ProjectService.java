@@ -30,15 +30,14 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class ProjectService {
-    
+
     @Autowired
     PMAssignmentRepository pmaRepository;
     @Autowired
     ProjectRepository projectRepository;
     @Autowired
     EmployeeRepository employeeRepository;
-    
-    
+
     public List<ProjectCases> getProjectsPageable(Pageable pageable) {
 
         Page<Project> pr = projectRepository.findAll(pageable);
@@ -63,9 +62,9 @@ public class ProjectService {
         }
         return projectsResponse;
     }
-    
-        public String registerProject(Long userId,ProjectCreationRequest projectCreationRequest) {
-            Employee em = employeeRepository.findById(userId)
+
+    public String registerProject(Long userId, ProjectCreationRequest projectCreationRequest) {
+        Employee em = employeeRepository.findById(userId)
                 .orElseThrow(() -> new EmployeeNotFound("Error: Employee not found"));
 
         Project project = new Project(projectCreationRequest.getName(),
@@ -87,5 +86,5 @@ public class ProjectService {
         pmaRepository.save(apm);
         return "{\"id\": \"" + project.getId() + "\"}";
     }
-    
+
 }
