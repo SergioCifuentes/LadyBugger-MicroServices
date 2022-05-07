@@ -4,6 +4,8 @@
  */
 package com.ladybugger.managerservice.service;
 
+import com.ladybugger.managerservice.exceptions.EmployeeNotFound;
+import com.ladybugger.managerservice.exceptions.LogicalError;
 import com.ladybugger.managerservice.model.Case;
 import com.ladybugger.managerservice.model.Employee;
 import com.ladybugger.managerservice.model.PMAssignment;
@@ -63,5 +65,22 @@ public class PhaseAssignmentService {
 
         phaseAssignmentRepository.save(phaseAssignment);
         return "{\"id\": \"" +phaseAssignment.getId() + "\"}";
+    }
+    
+    public PhaseAssignment cancelPhaseAssignment(Long userId,String phaseToDelete){
+        long phase_long;
+        try {
+            phase_long = Long.parseLong(phaseToDelete);
+        } catch (Exception e) {
+            throw new LogicalError("Wrong id");
+        }
+            Employee em = employeeRepository.findById(userId)
+                .orElseThrow(() -> new EmployeeNotFound("Error: Employee not found"));
+
+        PhaseAssignment phaseAssignment = phaseAssignmentRepository.findById(phase_long)
+                .orElseThrow(() -> new EmployeeNotFound("Phase not found for this id :: " + phaseToDelete));
+        phaseAssignment.setStatus(2);
+        PhaseAssignment updatedPhase = phaseAssignmentRepository.save(phaseAssignment);
+        return updatedPhase;
     }
 }

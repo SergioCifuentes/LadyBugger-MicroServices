@@ -4,6 +4,7 @@
  */
 package com.ladybugger.managerservice.service;
 
+import com.ladybugger.managerservice.exceptions.LogicalError;
 import com.ladybugger.managerservice.model.Case;
 import com.ladybugger.managerservice.model.Employee;
 import com.ladybugger.managerservice.model.PMAssignment;
@@ -17,7 +18,8 @@ import com.ladybugger.managerservice.repository.PMAssignmentRepository;
 import com.ladybugger.managerservice.repository.PhaseAssignmentRepository;
 import com.ladybugger.managerservice.repository.PhaseRepository;
 import java.util.Optional;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -121,6 +123,34 @@ public class PhaseAssignmentServiceTest {
         String expResult = "Error: You are not the project manager";
         String result = phaseAsService.assignPhase(userId, assignmentRequest);
         assertEquals(expResult, result);
+    }
+    
+    @Test
+    public void testCancelPhaseAssignment() {
+        System.out.println("cancelPhaseAssignment");
+        Long userId = 1l;
+        String phaseToDelete = "1";
+        Employee emp = new Employee();
+        Optional<Employee> optEmp = Optional.of(emp);
+        Mockito.when(employeeRepository.findById(userId)).thenReturn(optEmp);
+        PhaseAssignment phase = new PhaseAssignment();
+        Optional<PhaseAssignment> optPhase = Optional.of(phase);
+        Mockito.when(phaseAssignmentRepository.findById(Mockito.anyLong())).thenReturn(optPhase);
+        Mockito.when(phaseAssignmentRepository.save(phase)).thenReturn(phase);
+        PhaseAssignment resutl = phaseAsService.cancelPhaseAssignment(userId, phaseToDelete);
+        assertEquals(phase, phase);
+    }
+    
+    @Test
+    public void testCancelPhaseAssignmentPhaseNotlong() {
+        System.out.println("cancelPhaseAssignment");
+        Long userId = 1l;
+        String phaseToDelete = "error";
+        LogicalError error = assertThrows(LogicalError.class, () -> {
+            phaseAsService.cancelPhaseAssignment(userId, phaseToDelete);
+        });
+        String expected = "Wrong id";
+        assertEquals(expected, error.getMessage());
     }
     
 }

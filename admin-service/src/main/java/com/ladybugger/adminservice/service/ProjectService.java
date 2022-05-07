@@ -5,6 +5,8 @@
 package com.ladybugger.adminservice.service;
 
 import com.ladybugger.adminservice.exception.EmployeeNotFound;
+import com.ladybugger.adminservice.exception.LogicalError;
+import com.ladybugger.adminservice.exception.ProjectNotFound;
 import com.ladybugger.adminservice.model.Case;
 import com.ladybugger.adminservice.model.Employee;
 import com.ladybugger.adminservice.model.PMAssignment;
@@ -87,4 +89,18 @@ public class ProjectService {
         return "{\"id\": \"" + project.getId() + "\"}";
     }
 
+    public Project cancelProject(String project_id) {
+        long project_long;
+        try {
+            project_long = Long.parseLong(project_id);
+        } catch (Exception e) {
+            throw new LogicalError("Wrong id");
+        }
+
+        Project project = projectRepository.findById(project_long)
+                .orElseThrow(() -> new ProjectNotFound("Phase not found for this id :: " + project_long));
+        project.setStatus(2);
+        Project updatedProject = projectRepository.save(project);
+        return updatedProject;
+    }
 }
