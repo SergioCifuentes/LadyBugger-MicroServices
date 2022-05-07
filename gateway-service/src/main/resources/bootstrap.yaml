@@ -46,7 +46,7 @@ eureka:
     fetch-registry: true
     register-with-eureka: true
     service-url:
-      default-zone: http://localhost:8761/eureka
+      default-zone: https://eureka-app-dot-gcp-4a-348317.uc.r.appspot.com/eureka
   instance:
     hostname: localhost
     
