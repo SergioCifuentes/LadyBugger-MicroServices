@@ -4,17 +4,28 @@
  */
 package com.ladybugger.managerservice.service;
 
+import com.ladybugger.managerservice.exceptions.LogicalError;
+import com.ladybugger.managerservice.model.Case;
+import com.ladybugger.managerservice.model.CaseType;
 import com.ladybugger.managerservice.model.Employee;
+import com.ladybugger.managerservice.model.PMAssignment;
+import com.ladybugger.managerservice.model.Phase;
+import com.ladybugger.managerservice.model.PhaseAssignment;
 import com.ladybugger.managerservice.model.Project;
+import com.ladybugger.managerservice.payload.response.ProjectView;
 import com.ladybugger.managerservice.payload.response.SimpleProject;
 import com.ladybugger.managerservice.repository.EmployeeRepository;
 import com.ladybugger.managerservice.repository.PMAssignmentRepository;
+import com.ladybugger.managerservice.repository.PhaseAssignmentRepository;
 import com.ladybugger.managerservice.repository.ProjectRepository;
 import java.sql.Date;
+import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import java.util.Set;
+import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -34,6 +45,8 @@ public class ProjectServiceTest {
     private ProjectRepository projectRepository;
     @Mock
     private PMAssignmentRepository pmaRepository;
+    @Mock
+    private PhaseAssignmentRepository phaseAssignmentRepository;
     @InjectMocks
     private ProjectService projectService;
     
@@ -65,6 +78,57 @@ public class ProjectServiceTest {
         List<SimpleProject> expResult = List.of(Mockito.mock(SimpleProject.class));
         List<SimpleProject> result = projectService.getAssignedProject(userId);
         assertEquals(expResult.size(), result.size());
+    }
+    
+    @Test
+    public void testGetProject() {
+        System.out.println("getProject");
+        String projectId = "1";
+        Project project = new Project("name", "desc", 0, Date.valueOf(LocalDate.now()), Date.valueOf(LocalDate.now()), new Employee());
+        project.setCases(Set.of(getCase()));
+        Optional<Project> optProject = Optional.of(project);
+        Mockito.when(projectRepository.findById(Mockito.anyLong())).thenReturn(optProject);
+        PMAssignment pma = new PMAssignment(new Employee(), project, Timestamp.valueOf(LocalDateTime.MIN));
+        Mockito.when(pmaRepository.findLastManager(project.getId())).thenReturn(pma);
+        PhaseAssignment pha = new PhaseAssignment(new Employee(), null, null, projectId, 0, Date.valueOf(LocalDate.now()), Date.valueOf(LocalDate.now()));
+        Mockito.when(phaseAssignmentRepository.findDev(1l, 1l)).thenReturn(pha);
+        ProjectView pv = projectService.getProject(projectId);
+        assertNotNull(pv);
+    }
+    
+    @Test
+    public void testGetProjectWhenPhaseAssignmentIsNull() {
+        System.out.println("getProject");
+        String projectId = "1";
+        Project project = new Project("name", "desc", 0, Date.valueOf(LocalDate.now()), Date.valueOf(LocalDate.now()), new Employee());
+        project.setCases(Set.of(getCase()));
+        Optional<Project> optProject = Optional.of(project);
+        Mockito.when(projectRepository.findById(Mockito.anyLong())).thenReturn(optProject);
+        PMAssignment pma = new PMAssignment(new Employee(), project, Timestamp.valueOf(LocalDateTime.MIN));
+        Mockito.when(pmaRepository.findLastManager(project.getId())).thenReturn(pma);
+        Mockito.when(phaseAssignmentRepository.findDev(Mockito.anyLong(), Mockito.anyLong())).thenReturn(null);
+        ProjectView pv = projectService.getProject(projectId);
+        assertNotNull(pv);
+    }
+    
+    @Test
+    public void testGetProjectWhenProjectIdIsNotLong() {
+        System.out.println("getProject");
+        String projectId = "error";
+        LogicalError error = assertThrows(LogicalError.class, () -> {
+            projectService.getProject(projectId);
+        });
+        assertEquals("Wrong id", error.getMessage());
+    }
+    
+    private Case getCase() {
+        CaseType caset = new CaseType("desc", "desc", 0);
+        Phase ph = new Phase();
+        ph.setId(1l);
+        caset.setPhases(Set.of(ph));
+        Case casem = new Case("title", "desc", caset, 0, new Project(), Date.valueOf(LocalDate.now()), Date.valueOf(LocalDate.now()), 0);
+        casem.setId(1l);
+        return casem;
     }
     
 }

@@ -16,20 +16,18 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class RoleService {
-    private static final String ADMIN="ADMIN";
-    private static final String USER="USER";
-    
-    
-    
-    
-    public void createRoles(Employee employee){
-    Set<Role> roles = new HashSet<>();
+
+    private static final String ADMIN = "ADMIN";
+    private static final String USER = "USER";
+
+    public void createRoles(Employee employee) {
+        Set<Role> roles = new HashSet<>();
         if (employee.getRole().equals(ADMIN)) {
-            
-        }else{
-            
+
+        } else {
+
         }
-    
+
     }
-    
+
 }
